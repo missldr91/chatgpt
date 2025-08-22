@@ -3,6 +3,8 @@
 ## Overview
 A full-stack application that restyles source presentations (PPTX/PDF) into a provided brand template by intelligently mapping content to template layouts while preserving brand consistency.
 
+**GitHub Repository**: https://github.com/missldr91/chatgpt
+
 ## Features
 - **Primary Path**: PPTX → PPTX transformation with high fidelity
 - **Secondary Path**: PDF → PPTX with medium/low reliability warning
