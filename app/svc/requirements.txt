@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-pptx
+pdfplumber
+pdfminer.six
+pillow
+pytesseract
+pydantic
+numpy
+reportlab
