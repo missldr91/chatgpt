@@ -1,0 +1,7 @@
+FROM alpine:latest
+
+RUN apk add --no-cache tesseract-ocr tesseract-ocr-data-eng
+
+VOLUME /usr/share/tessdata
+
+CMD ["tail", "-f", "/dev/null"]

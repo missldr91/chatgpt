@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  svc:
+    build:
+      context: ../svc
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../svc/data:/app/data
+      - ../svc/app:/app/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CORS_ORIGINS=http://localhost:3000
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - svc
+    command: npm run dev
+
+  tesseract:
+    image: tesseract:5-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.tesseract
+    command: tail -f /dev/null
+    volumes:
+      - tesseract-data:/usr/share/tessdata
+
+volumes:
+  tesseract-data:
