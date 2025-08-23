@@ -6,7 +6,7 @@ module.exports = {
       args: 'run dev',
       cwd: '/home/user/webapp/app/web',
       env: {
-        NEXT_PUBLIC_API_URL: 'http://localhost:8000',
+        NEXT_PUBLIC_API_URL: 'https://8000-ieq6xwbj6bsk4tk4gpuij-6532622b.e2b.dev',
         PORT: 3000
       },
       watch: false,

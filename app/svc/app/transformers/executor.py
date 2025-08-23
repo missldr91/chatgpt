@@ -104,7 +104,9 @@ class TransformationExecutor:
                 if text:
                     # Assume first text is title if in top portion
                     if not title_text and hasattr(shape, 'top'):
-                        if shape.top < source_slide.part.slide_height * 0.3:
+                        # Use presentation slide height
+                        slide_height = self.source_prs.slide_height
+                        if shape.top < slide_height * 0.3:
                             title_text = text
                         else:
                             body_texts.append(text)

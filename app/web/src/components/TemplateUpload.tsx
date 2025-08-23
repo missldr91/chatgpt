@@ -17,12 +17,17 @@ export function TemplateUpload() {
       return;
     }
     
+    console.log('Uploading file:', file.name, 'Size:', file.size);
+    
     setLoading(true);
     try {
       const template = await uploadTemplate(file);
+      console.log('Upload successful:', template);
       setTemplate(template);
     } catch (error: any) {
-      setError(error.response?.data?.detail || 'Failed to upload template');
+      console.error('Upload error:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to upload template';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,0 +1,48 @@
+{
+  "plan_id": "46d02375-8f94-4731-8688-1f5ebfd51475",
+  "slides": [
+    {
+      "idx": 0,
+      "chosen_layout_id": "layout_1",
+      "score": 0.45,
+      "issues": [
+        "low_fit"
+      ]
+    },
+    {
+      "idx": 1,
+      "chosen_layout_id": "layout_1",
+      "score": 0.34,
+      "issues": [
+        "overflow",
+        "low_fit"
+      ]
+    },
+    {
+      "idx": 2,
+      "chosen_layout_id": "layout_1",
+      "score": 0.44,
+      "issues": [
+        "overflow",
+        "low_fit"
+      ]
+    },
+    {
+      "idx": 3,
+      "chosen_layout_id": "layout_1",
+      "score": 0.45,
+      "issues": [
+        "low_fit"
+      ]
+    },
+    {
+      "idx": 4,
+      "chosen_layout_id": "layout_1",
+      "score": 0.45,
+      "issues": [
+        "no_table_support",
+        "low_fit"
+      ]
+    }
+  ]
+}

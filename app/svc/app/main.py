@@ -218,18 +218,24 @@ async def execute_transform(
 async def execute_job(job_id: str, plan: dict):
     """Background task to execute transformation"""
     try:
+        print(f"Starting job {job_id}")
         db.update_job(job_id, "running")
         
         # Get paths
         template_path = StorageManager.get_template_path(plan["template_id"])
         source_path = StorageManager.get_source_path(plan["source_id"])
         
+        print(f"Template path: {template_path}")
+        print(f"Source path: {source_path}")
+        
         if not template_path or not source_path:
-            raise Exception("Template or source file not found")
+            raise Exception(f"Files not found - Template: {template_path}, Source: {source_path}")
         
         # Execute transformation
         executor = TransformationExecutor(plan, template_path, source_path)
         result = executor.execute()
+        
+        print(f"Job {job_id} completed successfully")
         
         # Update job with results
         db.update_job(
@@ -240,8 +246,10 @@ async def execute_job(job_id: str, plan: dict):
             result["report"]
         )
     except Exception as e:
+        print(f"Job {job_id} failed with error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         db.update_job(job_id, "error")
-        print(f"Job {job_id} failed: {e}")
 
 @app.get("/jobs/{job_id}", response_model=JobStatus)
 async def get_job_status(job_id: str):
