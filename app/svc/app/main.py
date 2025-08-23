@@ -21,7 +21,7 @@ from .utils import StorageManager, validate_file_type
 app = FastAPI(title="PPTX Restyler API", version="1.0.0")
 
 # CORS configuration
-origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+origins = ["*"]  # Allow all origins for sandbox environment
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -42,46 +42,72 @@ async def root():
     """Health check endpoint"""
     return {"status": "healthy", "service": "PPTX Restyler API"}
 
+@app.get("/fixtures/{filename}")
+async def get_fixture(filename: str):
+    """Serve fixture files for testing"""
+    fixtures_base = Path("data/fixtures")
+    
+    # Define available fixtures
+    fixtures_map = {
+        "template.pptx": fixtures_base / "templates" / "brand_simple.pptx",
+        "source.pptx": fixtures_base / "sources" / "mini_5slide.pptx",
+        "source.pdf": fixtures_base / "sources" / "mini_pdf_5page.pdf"
+    }
+    
+    if filename not in fixtures_map:
+        raise HTTPException(404, f"Fixture not found. Available: {list(fixtures_map.keys())}")
+    
+    file_path = fixtures_map[filename]
+    if not file_path.exists():
+        raise HTTPException(404, f"Fixture file not found: {filename}")
+    
+    return FileResponse(str(file_path), filename=filename)
+
 @app.post("/templates/ingest", response_model=TemplateIngestResponse)
 async def ingest_template(file: UploadFile = File(...)):
     """Ingest a template PPTX file"""
-    # Validate file size
-    content = await file.read()
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(400, f"File too large. Maximum size is 50MB")
-    
-    # Validate file type
-    is_valid, file_type = validate_file_type(content, ["pptx"])
-    if not is_valid:
-        raise HTTPException(400, f"Invalid file type. Expected PPTX, got {file_type}")
-    
-    # Parse template
-    parser = TemplateParser(Path("temp.pptx"))  # Temporary workaround
-    
-    # Save file temporarily for parsing
-    temp_path = Path("temp_template.pptx")
-    temp_path.write_bytes(content)
-    
     try:
-        parser = TemplateParser(temp_path)
-        result = parser.parse()
+        # Validate file size
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(400, f"File too large. Maximum size is 50MB")
         
-        # Save to storage
-        template_id = result["template_id"]
-        StorageManager.save_template(content, template_id)
+        # Validate file type
+        is_valid, file_type = validate_file_type(content, ["pptx"])
+        if not is_valid:
+            raise HTTPException(400, f"Invalid file type. Expected PPTX, got {file_type}")
         
-        # Save to database
-        db.insert_template(
-            template_id,
-            result["theme_meta"],
-            result["layout_catalog"]
-        )
+        # Save file temporarily for parsing
+        temp_path = Path("temp_template.pptx")
+        temp_path.write_bytes(content)
         
-        return result
-    finally:
-        # Clean up temp file
-        if temp_path.exists():
-            temp_path.unlink()
+        try:
+            parser = TemplateParser(temp_path)
+            result = parser.parse()
+            
+            # Save to storage
+            template_id = result["template_id"]
+            StorageManager.save_template(content, template_id)
+            
+            # Save to database
+            db.insert_template(
+                template_id,
+                result["theme_meta"],
+                result["layout_catalog"]
+            )
+            
+            return result
+        finally:
+            # Clean up temp file
+            if temp_path.exists():
+                temp_path.unlink()
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in template ingest: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, f"Internal error: {str(e)}")
 
 @app.post("/sources/ingest", response_model=SourceIngestResponse)
 async def ingest_source(

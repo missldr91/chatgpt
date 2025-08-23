@@ -2,8 +2,8 @@
 from pathlib import Path
 from typing import Optional
 import shutil
-import magic
 import hashlib
+import json
 
 class StorageManager:
     """Manage file storage operations"""
@@ -51,7 +51,6 @@ class StorageManager:
     @classmethod
     def save_plan(cls, plan_id: str, plan_data: dict) -> Path:
         """Save plan as JSON"""
-        import json
         path = cls.BASE_PATH / "plans" / f"{plan_id}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(plan_data, indent=2))
@@ -60,7 +59,6 @@ class StorageManager:
     @classmethod
     def get_plan(cls, plan_id: str) -> Optional[dict]:
         """Load plan from JSON"""
-        import json
         path = cls.BASE_PATH / "plans" / f"{plan_id}.json"
         if path.exists():
             return json.loads(path.read_text())
@@ -72,33 +70,30 @@ class StorageManager:
         return cls.BASE_PATH / "jobs" / job_id / "output.pptx"
 
 def validate_file_type(file_content: bytes, expected_types: list) -> tuple[bool, str]:
-    """Validate file type using magic bytes"""
+    """Validate file type using simple checks"""
     try:
-        # Check magic bytes
-        mime = magic.from_buffer(file_content, mime=True)
+        # Check for PPTX (ZIP signature with specific structure)
+        if "pptx" in expected_types:
+            # PPTX files start with PK (ZIP signature)
+            if file_content[:2] == b'PK':
+                # Additional check: try to find PPTX-specific content
+                import zipfile
+                import io
+                try:
+                    with zipfile.ZipFile(io.BytesIO(file_content)) as zf:
+                        if any('ppt/' in name for name in zf.namelist()):
+                            return True, "pptx"
+                except:
+                    pass
         
-        type_map = {
-            "pptx": ["application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                     "application/zip"],  # PPTX is a zip file
-            "pdf": ["application/pdf"]
-        }
+        # Check for PDF
+        if "pdf" in expected_types:
+            # PDF files start with %PDF
+            if file_content[:4] == b'%PDF':
+                return True, "pdf"
         
-        for expected in expected_types:
-            if expected in type_map:
-                if mime in type_map[expected]:
-                    return True, expected
+        # If we get here, file type not recognized
+        return False, "unknown"
         
-        # Additional check for PPTX (check for specific files in zip)
-        if "pptx" in expected_types and mime == "application/zip":
-            import zipfile
-            import io
-            try:
-                with zipfile.ZipFile(io.BytesIO(file_content)) as zf:
-                    if "ppt/presentation.xml" in zf.namelist():
-                        return True, "pptx"
-            except:
-                pass
-        
-        return False, mime
     except Exception as e:
         return False, str(e)
